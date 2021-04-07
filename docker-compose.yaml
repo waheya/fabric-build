@@ -1,0 +1,587 @@
+version: '2'
+
+volumes:
+  ca.org1.zju.com:
+  ca.org2.zju.com:
+  ca.orgca.zju.com:
+  orderer.zju.com:
+  orderer2.zju.com:
+  ordererca.zju.com:
+  peer0.org1.zju.com:
+  peer0.org2.zju.com:
+  peer0.orgca.zju.com:
+  peer1.org1.zju.com:
+  peer1.org2.zju.com:
+  peer1.orgca.zju.com:
+  peer2.org1.zju.com:
+  peer2.org2.zju.com:
+  peer2.orgca.zju.com:
+  
+networks:
+  test:
+  
+services:
+
+  ca.orderer.zju.com:
+    image: hyperledger/fabric-ca:1.4.9
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca.orderer.zju.com
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_PORT=17050
+    ports:
+      - "17050:17050"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+      - ./crypto-config/fabric-ca/ordererOrg:/etc/hyperledger/fabric-ca-server
+    container_name: ca_orderer
+    networks:
+      - test
+
+  ca.org1.zju.com:
+    image: hyperledger/fabric-ca:1.4.9
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca.org1.zju.com
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_PORT=17051
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org1.zju.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/priv_sk
+    ports:
+      - "17051:17051"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+      - ./crypto-config/fabric-ca/org1:/etc/hyperledger/fabric-ca-server
+    container_name: ca_org1
+    networks:
+      - test
+
+  ca.org2.zju.com:
+    image: hyperledger/fabric-ca:1.4.9
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca.org2.zju.com
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_PORT=17052
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.org2.zju.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/priv_sk
+    ports:
+      - "17052:17052"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+      - ./crypto-config/fabric-ca/org2:/etc/hyperledger/fabric-ca-server
+    container_name: ca_org2
+    networks:
+      - test
+
+  ca.orgca.zju.com:
+    image: hyperledger/fabric-ca:1.4.9
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca.orgca.zju.com
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_PORT=17053
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.orgca.zju.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/priv_sk
+    ports:
+      - "17053:17053"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+      - ./crypto-config/fabric-ca/orgca:/etc/hyperledger/fabric-ca-server
+    container_name: ca_orgca
+    networks:
+      - test
+      
+  orderer.zju.com:
+    container_name: orderer.zju.com
+    image: hyperledger/fabric-orderer:2.3
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_KAFKA_TOPIC_REPLICATIONFACTOR=1
+      - ORDERER_KAFKA_VERBOSE=true
+      - ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    networks:
+    - test
+    ports:
+    - 7050:7050
+    volumes:
+    - ./channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+    - ./crypto-config/ordererOrganizations/zju.com/orderers/orderer.zju.com/msp:/var/hyperledger/orderer/msp
+    - ./crypto-config/ordererOrganizations/zju.com/orderers/orderer.zju.com/tls/:/var/hyperledger/orderer/tls
+    - orderer.zju.com:/var/hyperledger/production/orderer
+
+  orderer2.zju.com:
+    container_name: orderer2.zju.com
+    image: hyperledger/fabric-orderer:2.3
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_KAFKA_TOPIC_REPLICATIONFACTOR=1
+      - ORDERER_KAFKA_VERBOSE=true
+      - ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    networks:
+    - test
+    ports:
+    - 27050:7050
+    volumes:
+    - ./channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+    - ./crypto-config/ordererOrganizations/zju.com/orderers/orderer2.zju.com/msp:/var/hyperledger/orderer/msp
+    - ./crypto-config/ordererOrganizations/zju.com/orderers/orderer2.zju.com/tls/:/var/hyperledger/orderer/tls
+    - orderer2.zju.com:/var/hyperledger/production/orderer
+
+  ordererca.zju.com:
+    container_name: ordererca.zju.com
+    image: hyperledger/fabric-orderer:2.3
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_KAFKA_TOPIC_REPLICATIONFACTOR=1
+      - ORDERER_KAFKA_VERBOSE=true
+      - ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    networks:
+    - test
+    ports:
+    - 37050:7050
+    volumes:
+    - ./channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+    - ./crypto-config/ordererOrganizations/zju.com/orderers/ordererca.zju.com/msp:/var/hyperledger/orderer/msp
+    - ./crypto-config/ordererOrganizations/zju.com/orderers/ordererca.zju.com/tls/:/var/hyperledger/orderer/tls
+    - ordererca.zju.com:/var/hyperledger/production/orderer
+
+  peer0.org1.zju.com:
+    container_name: peer0.org1.zju.com
+    image: hyperledger/fabric-peer:2.3
+    environment:
+    #Generic peer variables
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    # the following setting starts chaincode containers on the same
+    # bridge network as the peers
+    # https://docs.docker.com/compose/networking/
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_test
+    - FABRIC_LOGGING_SPEC=INFO
+    #- FABRIC_LOGGING_SPEC=DEBUG
+    - CORE_PEER_TLS_ENABLED=true
+    - CORE_PEER_PROFILE_ENABLED=true
+    - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+    - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+    - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+    # Peer specific variabes
+    - CORE_PEER_ID=peer0.org1.zju.com
+    - CORE_PEER_ADDRESS=peer0.org1.zju.com:7051
+    - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+    - CORE_PEER_CHAINCODEADDRESS=peer0.org1.zju.com:7061
+    - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7061
+    - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.org1.zju.com:7151,peer2.org1.zju.com:7251
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.zju.com:7051
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    networks:
+    - test
+    ports:
+    - 7051:7051
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./crypto-config/peerOrganizations/org1.zju.com/peers/peer0.org1.zju.com/msp:/etc/hyperledger/fabric/msp
+    - ./crypto-config/peerOrganizations/org1.zju.com/peers/peer0.org1.zju.com/tls:/etc/hyperledger/fabric/tls
+    - peer0.org1.zju.com:/var/hyperledger/production
+
+  peer0.org2.zju.com:
+    container_name: peer0.org2.zju.com
+    image: hyperledger/fabric-peer:2.3
+    environment:
+    #Generic peer variables
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    # the following setting starts chaincode containers on the same
+    # bridge network as the peers
+    # https://docs.docker.com/compose/networking/
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_test
+    - FABRIC_LOGGING_SPEC=INFO
+    #- FABRIC_LOGGING_SPEC=DEBUG
+    - CORE_PEER_TLS_ENABLED=true
+    - CORE_PEER_PROFILE_ENABLED=true
+    - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+    - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+    - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+    # Peer specific variabes
+    - CORE_PEER_ID=peer0.org2.zju.com
+    - CORE_PEER_ADDRESS=peer0.org2.zju.com:7052
+    - CORE_PEER_LISTENADDRESS=0.0.0.0:7052
+    - CORE_PEER_CHAINCODEADDRESS=peer0.org2.zju.com:7062
+    - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7062
+    - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.org2.zju.com:7152,peer2.org2.zju.com:7252
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.zju.com:7052
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    networks:
+    - test
+    ports:
+    - 7052:7052
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./crypto-config/peerOrganizations/org2.zju.com/peers/peer0.org2.zju.com/msp:/etc/hyperledger/fabric/msp
+    - ./crypto-config/peerOrganizations/org2.zju.com/peers/peer0.org2.zju.com/tls:/etc/hyperledger/fabric/tls
+    - peer0.org2.zju.com:/var/hyperledger/production
+
+  peer0.orgca.zju.com:
+    container_name: peer0.orgca.zju.com
+    image: hyperledger/fabric-peer:2.3
+    environment:
+    #Generic peer variables
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    # the following setting starts chaincode containers on the same
+    # bridge network as the peers
+    # https://docs.docker.com/compose/networking/
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_test
+    - FABRIC_LOGGING_SPEC=INFO
+    #- FABRIC_LOGGING_SPEC=DEBUG
+    - CORE_PEER_TLS_ENABLED=true
+    - CORE_PEER_PROFILE_ENABLED=true
+    - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+    - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+    - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+    # Peer specific variabes
+    - CORE_PEER_ID=peer0.orgca.zju.com
+    - CORE_PEER_ADDRESS=peer0.orgca.zju.com:7053
+    - CORE_PEER_LISTENADDRESS=0.0.0.0:7053
+    - CORE_PEER_CHAINCODEADDRESS=peer0.orgca.zju.com:7063
+    - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7063
+    - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.orgca.zju.com:7153,peer2.orgca.zju.com:7253
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.orgca.zju.com:7053
+    - CORE_PEER_LOCALMSPID=OrgCaMSP
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    networks:
+    - test
+    ports:
+    - 7053:7053
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./crypto-config/peerOrganizations/orgca.zju.com/peers/peer0.orgca.zju.com/msp:/etc/hyperledger/fabric/msp
+    - ./crypto-config/peerOrganizations/orgca.zju.com/peers/peer0.orgca.zju.com/tls:/etc/hyperledger/fabric/tls
+    - peer0.orgca.zju.com:/var/hyperledger/production
+
+  peer1.org1.zju.com:
+    container_name: peer1.org1.zju.com
+    image: hyperledger/fabric-peer:2.3
+    environment:
+    #Generic peer variables
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    # the following setting starts chaincode containers on the same
+    # bridge network as the peers
+    # https://docs.docker.com/compose/networking/
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_test
+    - FABRIC_LOGGING_SPEC=INFO
+    #- FABRIC_LOGGING_SPEC=DEBUG
+    - CORE_PEER_TLS_ENABLED=true
+    - CORE_PEER_PROFILE_ENABLED=true
+    - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+    - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+    - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+    # Peer specific variabes
+    - CORE_PEER_ID=peer1.org1.zju.com
+    - CORE_PEER_ADDRESS=peer1.org1.zju.com:7151
+    - CORE_PEER_LISTENADDRESS=0.0.0.0:7151
+    - CORE_PEER_CHAINCODEADDRESS=peer1.org1.zju.com:7161
+    - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7161
+    - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.zju.com:7051,peer2.org1.zju.com:7251
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org1.zju.com:7151
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    networks:
+    - test
+    ports:
+    - 7151:7151
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./crypto-config/peerOrganizations/org1.zju.com/peers/peer1.org1.zju.com/msp:/etc/hyperledger/fabric/msp
+    - ./crypto-config/peerOrganizations/org1.zju.com/peers/peer1.org1.zju.com/tls:/etc/hyperledger/fabric/tls
+    - peer1.org1.zju.com:/var/hyperledger/production
+
+  peer1.org2.zju.com:
+    container_name: peer1.org2.zju.com
+    image: hyperledger/fabric-peer:2.3
+    environment:
+    #Generic peer variables
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    # the following setting starts chaincode containers on the same
+    # bridge network as the peers
+    # https://docs.docker.com/compose/networking/
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_test
+    - FABRIC_LOGGING_SPEC=INFO
+    #- FABRIC_LOGGING_SPEC=DEBUG
+    - CORE_PEER_TLS_ENABLED=true
+    - CORE_PEER_PROFILE_ENABLED=true
+    - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+    - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+    - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+    # Peer specific variabes
+    - CORE_PEER_ID=peer1.org2.zju.com
+    - CORE_PEER_ADDRESS=peer1.org2.zju.com:7152
+    - CORE_PEER_LISTENADDRESS=0.0.0.0:7152
+    - CORE_PEER_CHAINCODEADDRESS=peer1.org2.zju.com:7162
+    - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7162
+    - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.zju.com:7052,peer2.org2.zju.com:7252
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org2.zju.com:7152
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    networks:
+    - test
+    ports:
+    - 22001:22001
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./crypto-config/peerOrganizations/org2.zju.com/peers/peer1.org2.zju.com/msp:/etc/hyperledger/fabric/msp
+    - ./crypto-config/peerOrganizations/org2.zju.com/peers/peer1.org2.zju.com/tls:/etc/hyperledger/fabric/tls
+    - peer1.org2.zju.com:/var/hyperledger/production
+
+  peer1.orgca.zju.com:
+    container_name: peer1.orgca.zju.com
+    image: hyperledger/fabric-peer:2.3
+    environment:
+    #Generic peer variables
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    # the following setting starts chaincode containers on the same
+    # bridge network as the peers
+    # https://docs.docker.com/compose/networking/
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_test
+    - FABRIC_LOGGING_SPEC=INFO
+    #- FABRIC_LOGGING_SPEC=DEBUG
+    - CORE_PEER_TLS_ENABLED=true
+    - CORE_PEER_PROFILE_ENABLED=true
+    - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+    - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+    - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+    # Peer specific variabes
+    - CORE_PEER_ID=peer1.orgca.zju.com
+    - CORE_PEER_ADDRESS=peer1.orgca.zju.com:7153
+    - CORE_PEER_LISTENADDRESS=0.0.0.0:7153
+    - CORE_PEER_CHAINCODEADDRESS=peer1.orgca.zju.com:7163
+    - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7163
+    - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orgca.zju.com:7053,peer2.orgca.zju.com:7253
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.orgca.zju.com:7153
+    - CORE_PEER_LOCALMSPID=OrgCaMSP
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    networks:
+    - test
+    ports:
+    - 7153:7153
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./crypto-config/peerOrganizations/orgca.zju.com/peers/peer1.orgca.zju.com/msp:/etc/hyperledger/fabric/msp
+    - ./crypto-config/peerOrganizations/orgca.zju.com/peers/peer1.orgca.zju.com/tls:/etc/hyperledger/fabric/tls
+    - peer1.orgca.zju.com:/var/hyperledger/production
+
+
+
+  peer2.org1.zju.com:
+    container_name: peer2.org1.zju.com
+    image: hyperledger/fabric-peer:2.3
+    environment:
+    #Generic peer variables
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    # the following setting starts chaincode containers on the same
+    # bridge network as the peers
+    # https://docs.docker.com/compose/networking/
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_test
+    - FABRIC_LOGGING_SPEC=INFO
+    #- FABRIC_LOGGING_SPEC=DEBUG
+    - CORE_PEER_TLS_ENABLED=true
+    - CORE_PEER_PROFILE_ENABLED=true
+    - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+    - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+    - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+    # Peer specific variabes
+    - CORE_PEER_ID=peer2.org1.zju.com
+    - CORE_PEER_ADDRESS=peer2.org1.zju.com:7251
+    - CORE_PEER_LISTENADDRESS=0.0.0.0:7251
+    - CORE_PEER_CHAINCODEADDRESS=peer2.org1.zju.com:7261
+    - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7261
+    - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.zju.com:7051,peer1.org1.zju.com:7151
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org1.zju.com:7251
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    networks:
+    - test
+    ports:
+    - 7251:7251
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./crypto-config/peerOrganizations/org1.zju.com/peers/peer2.org1.zju.com/msp:/etc/hyperledger/fabric/msp
+    - ./crypto-config/peerOrganizations/org1.zju.com/peers/peer2.org1.zju.com/tls:/etc/hyperledger/fabric/tls
+    - peer2.org1.zju.com:/var/hyperledger/production
+
+  peer2.org2.zju.com:
+    container_name: peer2.org2.zju.com
+    image: hyperledger/fabric-peer:2.3
+    environment:
+    #Generic peer variables
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    # the following setting starts chaincode containers on the same
+    # bridge network as the peers
+    # https://docs.docker.com/compose/networking/
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_test
+    - FABRIC_LOGGING_SPEC=INFO
+    #- FABRIC_LOGGING_SPEC=DEBUG
+    - CORE_PEER_TLS_ENABLED=true
+    - CORE_PEER_PROFILE_ENABLED=true
+    - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+    - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+    - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+    # Peer specific variabes
+    - CORE_PEER_ID=peer2.org2.zju.com
+    - CORE_PEER_ADDRESS=peer2.org2.zju.com:7252
+    - CORE_PEER_LISTENADDRESS=0.0.0.0:7252
+    - CORE_PEER_CHAINCODEADDRESS=peer2.org2.zju.com:7262
+    - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7262
+    - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.zju.com:7052,peer1.org2.zju.com:7152
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.org2.zju.com:7252
+    - CORE_PEER_LOCALMSPID=Org2MSP
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    networks:
+    - test
+    ports:
+    - 7252:7252
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./crypto-config/peerOrganizations/org2.zju.com/peers/peer2.org2.zju.com/msp:/etc/hyperledger/fabric/msp
+    - ./crypto-config/peerOrganizations/org2.zju.com/peers/peer2.org2.zju.com/tls:/etc/hyperledger/fabric/tls
+    - peer2.org2.zju.com:/var/hyperledger/production
+
+  peer2.orgca.zju.com:
+    container_name: peer2.orgca.zju.com
+    image: hyperledger/fabric-peer:2.3
+    environment:
+    #Generic peer variables
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    # the following setting starts chaincode containers on the same
+    # bridge network as the peers
+    # https://docs.docker.com/compose/networking/
+    - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_test
+    - FABRIC_LOGGING_SPEC=INFO
+    #- FABRIC_LOGGING_SPEC=DEBUG
+    - CORE_PEER_TLS_ENABLED=true
+    - CORE_PEER_PROFILE_ENABLED=true
+    - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+    - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+    - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+    # Peer specific variabes
+    - CORE_PEER_ID=peer2.orgca.zju.com
+    - CORE_PEER_ADDRESS=peer2.orgca.zju.com:7253
+    - CORE_PEER_LISTENADDRESS=0.0.0.0:7253
+    - CORE_PEER_CHAINCODEADDRESS=peer2.orgca.zju.com:7263
+    - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7263
+    - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.orgca.zju.com:7063,peer1.orgca.zju.com:7163
+    - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer2.orgca.zju.com:7253
+    - CORE_PEER_LOCALMSPID=OrgCaMSP
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: peer node start
+    networks:
+    - test
+    ports:
+    - 7253:7253
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./crypto-config/peerOrganizations/orgca.zju.com/peers/peer2.orgca.zju.com/msp:/etc/hyperledger/fabric/msp
+    - ./crypto-config/peerOrganizations/orgca.zju.com/peers/peer2.orgca.zju.com/tls:/etc/hyperledger/fabric/tls
+    - peer2.orgca.zju.com:/var/hyperledger/production
+
+  cli:
+    command: /bin/bash
+    container_name: cli
+    depends_on:
+    - ca.org1.zju.com
+    - ca.org2.zju.com
+    - ca.orgca.zju.com
+
+    - orderer.zju.com
+    - orderer2.zju.com
+    - ordererca.zju.com
+    
+    - peer0.org1.zju.com
+    - peer1.org1.zju.com
+    - peer2.org1.zju.com
+
+    - peer0.org2.zju.com
+    - peer1.org2.zju.com
+    - peer2.org2.zju.com
+
+    - peer0.orgca.zju.com
+    - peer1.orgca.zju.com
+    - peer2.orgca.zju.com
+
+    environment:
+    - SYS_CHANNEL=system-channel
+    - GOPATH=/opt/gopath
+    - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+    - FABRIC_LOGGING_SPEC=DEBUG
+    - FABRIC_LOGGING_SPEC=INFO
+    - CORE_PEER_ID=cli
+    - CORE_PEER_ADDRESS=peer0.org1.zju.com:7051
+    - CORE_PEER_LOCALMSPID=Org1MSP
+    - CORE_PEER_TLS_ENABLED=true
+    - CORE_PEER_TLS_CERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.zju.com/peers/peer0.org1.zju.com/tls/server.crt
+    - CORE_PEER_TLS_KEY_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.zju.com/peers/peer0.org1.zju.com/tls/server.key
+    - CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.zju.com/peers/peer0.org1.zju.com/tls/ca.crt
+    - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.zju.com/users/Admin@org1.zju.com/msp
+    image: hyperledger/fabric-tools:2.3
+    networks:
+    - test
+    stdin_open: true
+    tty: true
+    volumes:
+    - /var/run/:/host/var/run/
+    - ./../chaincode/:/opt/gopath/src/github.com/chaincode
+    - ./../config/:/opt/gopath/src/github.com/hyperledger/fabric/peer/config/
+    - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+    - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
